@@ -406,37 +406,41 @@ class CompleteStatisticalAnalysis:
             print(" Вывод: Отвергаем H₀ - распределение значимо отличается от нормального")
        
         print()
-    
+
     def section_interval_estimates(self):
         print("ИНТЕРВАЛЬНЫЕ ОЦЕНКИ ЧИСЛОВЫХ ХАРАКТЕРИСТИК ДАННЫХ")
         print("=" * 50)
-        
+
         mean = np.mean(self.doctors_data)
         std = np.std(self.doctors_data, ddof=1)
         n = len(self.doctors_data)
-        
+
         print(f"Исходные данные: n = {n}, x̄ = {mean:.0f}, s = {std:.0f}")
-        
-        # Доверительный интервал для математического ожидания (нормальное распределение)
-        t_critical = stats.t.ppf(0.975, df=n-1)
-        margin_error = t_critical * (std / np.sqrt(n-1))
-        ci_lower = mean - margin_error
-        ci_upper = mean + margin_error
-        
+
+        # Расчет коэффициента эксцесса для формулы
+        m4 = np.mean((self.doctors_data - mean) ** 4)
+        e_kurtosis = (m4 / (std ** 4)) - 3
+
+        print(f"\nКоэффициент эксцесса: {e_kurtosis:.2f}")
+
+        # Доверительный интервал для математического ожидания (произвольное распределение)
+        z_critical = stats.norm.ppf(0.975)
+        margin_error_mean = z_critical * (std / np.sqrt(n))
+        ci_lower = mean - margin_error_mean
+        ci_upper = mean + margin_error_mean
+
         print("\nДоверительный интервал для математического ожидания (95%):")
-        print(f"   Предположение: нормальное распределение")
-        print(f"   t-критическое ({n-1} степеней свободы): {t_critical:.4f}")
+        print(f"   Метод: для произвольной генеральной совокупности")
+        print(f"   z-критическое: {z_critical:.4f}")
         print(f"   Интервал: [{ci_lower:.0f}; {ci_upper:.0f}] чел.")
-        
-        # Доверительный интервал для СКО (нормальное распределение)
-        chi2_lower = stats.chi2.ppf(0.025, df=n-1)
-        chi2_upper = stats.chi2.ppf(0.975, df=n-1)
-        std_lower = std * np.sqrt(n) / np.sqrt(chi2_upper)
-        std_upper = std * np.sqrt(n) / np.sqrt(chi2_lower)
-        
+
+        # Доверительный интервал для СКО (произвольное распределение)
+        margin_error_std = 0.5 * z_critical * np.sqrt((e_kurtosis + 2) / n)
+        std_lower = std * (1 - margin_error_std)
+        std_upper = std * (1 + margin_error_std)
+
         print("\nДоверительный интервал для СКО (95%):")
-        print(f"   Предположение: нормальное распределение") 
-        print(f"   χ²-критические: [{chi2_lower:.1f}; {chi2_upper:.1f}]")
+        print(f"   Метод: для произвольной генеральной совокупности")
         print(f"   Интервал: [{std_lower:.0f}; {std_upper:.0f}] чел.")
 
     def section_comparative_analysis(self, chars: Dict):
